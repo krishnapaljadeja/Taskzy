@@ -26,7 +26,8 @@ export const AuthProvider = ({ children }) => {
         const response = await axios.get("http://localhost:5000/api/auth/me", {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setUser(response.data.user);
+        // Fix: The response structure should match what the backend returns
+        setUser(response.data);
       } catch (error) {
         localStorage.removeItem("token");
         setUser(null);
