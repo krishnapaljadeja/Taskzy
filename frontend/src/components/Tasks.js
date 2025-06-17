@@ -65,7 +65,7 @@ const Tasks = ({ projectId, isMyTasksView = false }) => {
       const response = await axios.post(
         config.TASKS.CREATE,
         taskData,
-        getAuthHeader()
+        { headers: getAuthHeader() }
       );
       setTasks((prevTasks) => [...prevTasks, response.data]);
       setIsModalOpen(false);
@@ -84,7 +84,7 @@ const Tasks = ({ projectId, isMyTasksView = false }) => {
       const response = await axios.put(
         config.TASKS.UPDATE(taskId),
         { status: newStatus },
-        getAuthHeader()
+        { headers: getAuthHeader() }
       );
       setTasks((prevTasks) =>
         prevTasks.map((task) => (task._id === taskId ? response.data : task))
@@ -101,7 +101,7 @@ const Tasks = ({ projectId, isMyTasksView = false }) => {
       return;
     }
     try {
-      await axios.delete(config.TASKS.DELETE(taskId), getAuthHeader());
+      await axios.delete(config.TASKS.DELETE(taskId), { headers: getAuthHeader() });
       setTasks((prevTasks) => prevTasks.filter((task) => task._id !== taskId));
     } catch (err) {
       setError(err.response?.data?.message || "Failed to delete task.");
@@ -109,100 +109,193 @@ const Tasks = ({ projectId, isMyTasksView = false }) => {
   };
 
   if (authLoading || loading) {
-    return <div className="text-center py-4">Loading tasks...</div>;
+    return (
+      <div className="text-center py-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
+        <p className="text-gray-300">Loading tasks...</p>
+      </div>
+    );
   }
 
   if (!user) {
     return (
-      <div className="text-center py-4 text-red-600">
-        Authentication required to view tasks.
+      <div className="text-center py-8">
+        <div className="bg-red-900 border border-red-700 rounded-lg p-4">
+          <p className="text-red-300">Authentication required to view tasks.</p>
+        </div>
       </div>
     );
   }
 
   if (error) {
-    return <div className="text-center py-4 text-red-600">Error: {error}</div>;
+    return (
+      <div className="text-center py-8">
+        <div className="bg-red-900 border border-red-700 rounded-lg p-4">
+          <p className="text-red-300">Error: {error}</p>
+        </div>
+      </div>
+    );
   }
 
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case "To Do":
+        return (
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        );
+      case "In Progress":
+        return (
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+        );
+      case "Done":
+        return (
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+        );
+      default:
+        return null;
+    }
+  };
+
+  const getPriorityIcon = (priority) => {
+    switch (priority) {
+      case "High":
+        return (
+          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+          </svg>
+        );
+      case "Medium":
+        return (
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        );
+      case "Low":
+        return (
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+          </svg>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
-    <div className="bg-white shadow rounded-lg p-6">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-semibold text-gray-900">
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-white flex items-center">
+          <svg className="w-6 h-6 mr-2 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+          </svg>
           {isMyTasksView
             ? "My Tasks"
             : projectId
-            ? `Tasks for Project: ${projectId}`
+            ? "Project Tasks"
             : "Tasks"}
         </h2>
-        {user?.role === "project-manager" && (
+        {user?.role === "project-manager" && projectId && (
           <button
             onClick={() => setIsModalOpen(true)}
-            className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
+            className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-green-600 to-blue-600 text-white font-medium rounded-lg hover:from-green-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-all duration-200 shadow-lg"
           >
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
             Create Task
           </button>
         )}
       </div>
 
       {tasks.length === 0 ? (
-        <p className="text-gray-500">No tasks found.</p>
+        <div className="text-center py-12">
+          <svg className="w-16 h-16 text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+          <p className="text-gray-400 text-lg">No tasks found</p>
+          <p className="text-gray-500 text-sm mt-2">
+            {isMyTasksView 
+              ? "You don't have any assigned tasks yet" 
+              : "No tasks have been created for this project"}
+          </p>
+        </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {tasks.map((task) => (
-            <div key={task._id} className="bg-gray-50 p-4 rounded-lg shadow-sm">
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                {task.title}
-              </h3>
-              <p className="text-sm text-gray-600 mb-3">{task.description}</p>
-              <div className="flex items-center text-sm mb-2">
-                <span
-                  className={`px-2 py-1 rounded-full text-xs font-semibold ${getStatusColor(
-                    task.status
-                  )}`}
-                >
-                  {task.status}
-                </span>
-                <span
-                  className={`ml-2 text-xs font-semibold ${getPriorityColor(
-                    task.priority
-                  )}`}
-                >
-                  Priority: {task.priority}
-                </span>
+            <div key={task._id} className="bg-gray-700 border border-gray-600 rounded-xl p-6 hover:bg-gray-650 transition-all duration-200 shadow-lg hover:shadow-xl">
+              <div className="flex items-start justify-between mb-4">
+                <h3 className="text-lg font-semibold text-white mb-2 line-clamp-2">
+                  {task.title}
+                </h3>
+                <div className="flex items-center space-x-2">
+                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(task.status)}`}>
+                    {getStatusIcon(task.status)}
+                    <span className="ml-1">{task.status}</span>
+                  </span>
+                </div>
               </div>
-              {task.dueDate && (
-                <p className="text-sm text-gray-500 mb-2">
-                  Due: {new Date(task.dueDate).toLocaleDateString()}
-                </p>
-              )}
-              {task.assignedTo && (
-                <p className="text-sm text-gray-500 mb-2">
-                  Assigned to: {task.assignedTo.name}
-                </p>
-              )}
-              <div className="mt-4 flex space-x-2">
-                {user?.role === "project-manager" && (
-                  <button
-                    onClick={() => handleDeleteTask(task._id)}
-                    className="text-red-600 hover:text-red-800 text-sm"
-                  >
-                    Delete
-                  </button>
+              
+              <p className="text-gray-300 text-sm mb-4 line-clamp-3">
+                {task.description}
+              </p>
+              
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className={`flex items-center text-xs font-medium ${getPriorityColor(task.priority)}`}>
+                    {getPriorityIcon(task.priority)}
+                    <span className="ml-1">Priority: {task.priority}</span>
+                  </div>
+                </div>
+                
+                {task.dueDate && (
+                  <div className="flex items-center text-xs text-gray-400">
+                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    Due: {new Date(task.dueDate).toLocaleDateString()}
+                  </div>
                 )}
-                {(user?.role === "project-manager" ||
-                  user?.role === "team-member") && (
-                  <select
-                    value={task.status}
-                    onChange={(e) =>
-                      handleUpdateStatus(task._id, e.target.value)
-                    }
-                    className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-                  >
-                    <option value="To Do">To Do</option>
-                    <option value="In Progress">In Progress</option>
-                    <option value="Done">Done</option>
-                  </select>
+                
+                {task.assignedTo && (
+                  <div className="flex items-center text-xs text-gray-400">
+                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    Assigned to: {task.assignedTo.name || "Unknown"}
+                  </div>
                 )}
+                
+                <div className="flex items-center justify-between pt-3 border-t border-gray-600">
+                  {(user?.role === "project-manager" || user?.role === "team-member") && (
+                    <select
+                      value={task.status}
+                      onChange={(e) => handleUpdateStatus(task._id, e.target.value)}
+                      className="text-xs bg-gray-600 border border-gray-500 rounded px-2 py-1 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="To Do">To Do</option>
+                      <option value="In Progress">In Progress</option>
+                      <option value="Done">Done</option>
+                    </select>
+                  )}
+                  
+                  {user?.role === "project-manager" && (
+                    <button
+                      onClick={() => handleDeleteTask(task._id)}
+                      className="text-red-400 hover:text-red-300 p-1 rounded transition-colors"
+                      title="Delete task"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           ))}

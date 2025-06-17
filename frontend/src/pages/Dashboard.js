@@ -9,6 +9,7 @@ function Dashboard() {
   const { user, logout, loading } = useAuth();
   const navigate = useNavigate();
   const [selectedProject, setSelectedProject] = useState(null);
+  const [activeTab, setActiveTab] = useState("projects");
 
   console.log("Dashboard Component Render - user:", user, "loading:", loading);
 
@@ -28,9 +29,10 @@ function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-gray-900">
         <div className="text-center">
-          <h2 className="text-2xl font-semibold text-gray-900">Loading...</h2>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <h2 className="text-2xl font-semibold text-white">Loading...</h2>
         </div>
       </div>
     );
@@ -42,9 +44,11 @@ function Dashboard() {
         "renderRoleBasedContent: user or role is missing, falling back to default content."
       );
       return (
-        <p>
-          User role information is not available. Please try logging in again.
-        </p>
+        <div className="text-center py-8">
+          <p className="text-gray-300">
+            User role information is not available. Please try logging in again.
+          </p>
+        </div>
       );
     }
 
@@ -52,11 +56,38 @@ function Dashboard() {
       case "project-manager":
         return (
           <div className="space-y-8">
-            <Projects
-              onSelectProject={setSelectedProject}
-              selectedProject={selectedProject}
-            />
-            {selectedProject && <Tasks projectId={selectedProject._id} />}
+            <div className="flex space-x-1 bg-gray-800 p-1 rounded-lg">
+              <button
+                onClick={() => setActiveTab("projects")}
+                className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                  activeTab === "projects"
+                    ? "bg-blue-600 text-white"
+                    : "text-gray-300 hover:text-white hover:bg-gray-700"
+                }`}
+              >
+                Projects
+              </button>
+              <button
+                onClick={() => setActiveTab("tasks")}
+                className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                  activeTab === "tasks"
+                    ? "bg-blue-600 text-white"
+                    : "text-gray-300 hover:text-white hover:bg-gray-700"
+                }`}
+              >
+                Tasks
+              </button>
+            </div>
+            
+            {activeTab === "projects" && (
+              <Projects
+                onSelectProject={setSelectedProject}
+                selectedProject={selectedProject}
+              />
+            )}
+            {activeTab === "tasks" && selectedProject && (
+              <Tasks projectId={selectedProject._id} />
+            )}
           </div>
         );
       case "event-organizer":
@@ -64,40 +95,109 @@ function Dashboard() {
       case "team-member":
         return (
           <div className="space-y-8">
-            <Tasks projectId={null} isMyTasksView={true} />
+            <div className="flex space-x-1 bg-gray-800 p-1 rounded-lg">
+              <button
+                onClick={() => setActiveTab("projects")}
+                className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                  activeTab === "projects"
+                    ? "bg-blue-600 text-white"
+                    : "text-gray-300 hover:text-white hover:bg-gray-700"
+                }`}
+              >
+                My Projects
+              </button>
+              <button
+                onClick={() => setActiveTab("tasks")}
+                className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                  activeTab === "tasks"
+                    ? "bg-blue-600 text-white"
+                    : "text-gray-300 hover:text-white hover:bg-gray-700"
+                }`}
+              >
+                My Tasks
+              </button>
+            </div>
+            
+            {activeTab === "projects" && (
+              <Projects
+                onSelectProject={setSelectedProject}
+                selectedProject={selectedProject}
+              />
+            )}
+            {activeTab === "tasks" && (
+              <Tasks projectId={null} isMyTasksView={true} />
+            )}
           </div>
         );
       default:
         return (
-          <p>
-            Your role ({user.role}) does not have specific dashboard content.
-          </p>
+          <div className="text-center py-8">
+            <p className="text-gray-300">
+              Your role ({user.role}) does not have specific dashboard content.
+            </p>
+          </div>
         );
     }
   };
 
+  const getRoleColor = (role) => {
+    switch (role) {
+      case "project-manager":
+        return "bg-purple-600 text-purple-100";
+      case "event-organizer":
+        return "bg-green-600 text-green-100";
+      case "team-member":
+        return "bg-blue-600 text-blue-100";
+      default:
+        return "bg-gray-600 text-gray-100";
+    }
+  };
+
+  const formatRole = (role) => {
+    return role
+      .split("-")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  };
+
   return (
-    <div className="min-h-screen bg-gray-100">
-      <nav className="bg-white shadow-sm">
+    <div className="min-h-screen bg-gray-900">
+      <nav className="bg-gray-800 border-b border-gray-700 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
-            <div className="flex">
-              <div className="flex-shrink-0 flex items-center">
-                <h1 className="text-xl font-bold text-gray-900">
-                  Workspace Event Planner
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <h1 className="text-xl font-bold text-white flex items-center">
+                  <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg mr-3 flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">WP</span>
+                  </div>
+                  Workspace Planner
                 </h1>
               </div>
             </div>
-            <div className="flex items-center">
+            <div className="flex items-center space-x-4">
               {user?.name && user?.role && (
-                <span className="text-gray-700 mr-4">
-                  Welcome, {user.name} ({user.role})
-                </span>
+                <div className="flex items-center space-x-3">
+                  <div className="text-right">
+                    <p className="text-sm font-medium text-white">{user.name}</p>
+                    <p className={`text-xs px-2 py-1 rounded-full ${getRoleColor(user.role)}`}>
+                      {formatRole(user.role)}
+                    </p>
+                  </div>
+                  <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                    <span className="text-white font-medium text-sm">
+                      {user.name.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                </div>
               )}
               <button
                 onClick={handleLogout}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
               >
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
                 Logout
               </button>
             </div>
@@ -107,7 +207,7 @@ function Dashboard() {
 
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
-          <div className="bg-white shadow rounded-lg p-6">
+          <div className="bg-gray-800 shadow-xl rounded-xl border border-gray-700 p-6">
             {renderRoleBasedContent()}
           </div>
         </div>

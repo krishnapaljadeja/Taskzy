@@ -74,8 +74,8 @@ router.get("/:id", auth, async (req, res) => {
 
     // Check if user has access to the project
     if (
-      !project.createdBy.equals(req.user._id) &&
-      !project.teamMembers.some((member) => member._id.equals(req.user._id))
+      project.createdBy._id.toString() !== req.user.id &&
+      !project.teamMembers.some((member) => member._id.toString() === req.user.id)
     ) {
       return res
         .status(403)
@@ -109,7 +109,7 @@ router.patch(
       }
 
       // Check if user is the creator
-      if (!project.createdBy.equals(req.user._id)) {
+      if (project.createdBy.toString() !== req.user.id) {
         return res
           .status(403)
           .json({ message: "Not authorized to update this project" });
@@ -143,7 +143,7 @@ router.delete(
       }
 
       // Check if user is the creator
-      if (!project.createdBy.equals(req.user._id)) {
+      if (project.createdBy.toString() !== req.user.id) {
         return res
           .status(403)
           .json({ message: "Not authorized to delete this project" });
@@ -153,7 +153,7 @@ router.delete(
       await Task.deleteMany({ projectId: project._id });
 
       // Delete the project
-      await project.remove();
+      await Project.findByIdAndDelete(project._id);
       res.json({ message: "Project deleted successfully" });
     } catch (error) {
       res

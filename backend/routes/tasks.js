@@ -93,8 +93,8 @@ router.get("/project/:projectId", auth, async (req, res) => {
 
     // Check if user is creator or team member of the project
     if (
-      project.createdBy.toString() !== req.user.userId &&
-      !project.teamMembers.includes(req.user.userId)
+      project.createdBy.toString() !== req.user.id &&
+      !project.teamMembers.some((memberId) => memberId.toString() === req.user.id)
     ) {
       return res
         .status(403)
@@ -161,8 +161,8 @@ router.put(
       // Check if the user is a project manager or an assigned team member
       if (
         project.createdBy.toString() !== req.user.id &&
-        !project.teamMembers.includes(req.user.id) &&
-        task.assignedTo.toString() !== req.user.id
+        !project.teamMembers.some((memberId) => memberId.toString() === req.user.id) &&
+        !task.assignedTo.some((assigneeId) => assigneeId.toString() === req.user.id)
       ) {
         return res
           .status(403)
@@ -206,7 +206,7 @@ router.put(
       // Check if the user is the project manager or an assigned team member
       if (
         project.createdBy.toString() !== req.user.id &&
-        !project.teamMembers.includes(req.user.id)
+        !project.teamMembers.some((memberId) => memberId.toString() === req.user.id)
       ) {
         return res
           .status(403)
@@ -253,7 +253,7 @@ router.delete(
           .json({ message: "Not authorized to delete this task" });
       }
 
-      await task.remove();
+      await Task.findByIdAndDelete(task._id);
       res.json({ message: "Task deleted successfully" });
     } catch (error) {
       res
