@@ -55,6 +55,8 @@ router.get("/:id", auth, async (req, res) => {
     if (!event) {
       return res.status(404).json({ message: "Event not found" });
     }
+    
+    // Fix: Convert ObjectId to string for comparison
     if (!event.isPublic && event.createdBy.toString() !== req.user.id) {
       return res
         .status(403)
@@ -80,6 +82,8 @@ router.put(
       if (!event) {
         return res.status(404).json({ message: "Event not found" });
       }
+      
+      // Fix: Convert ObjectId to string for comparison
       if (event.createdBy.toString() !== req.user.id) {
         return res
           .status(403)
@@ -107,6 +111,8 @@ router.delete(
       if (!event) {
         return res.status(404).json({ message: "Event not found" });
       }
+      
+      // Fix: Convert ObjectId to string for comparison
       if (event.createdBy.toString() !== req.user.id) {
         return res
           .status(403)

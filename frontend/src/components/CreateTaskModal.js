@@ -11,26 +11,37 @@ function CreateTaskModal({ isOpen, onClose, onSubmit, projectId }) {
     priority: "Medium",
   });
   const [users, setUsers] = useState([]);
+  const [projectTeamMembers, setProjectTeamMembers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const fetchUsers = async () => {
+    const fetchProjectAndUsers = async () => {
+      if (!isOpen || !projectId) return;
+      
       try {
         const token = localStorage.getItem("token");
-        const response = await axios.get("http://localhost:5000/api/users", {
+        
+        // Fetch project details to get team members
+        const projectResponse = await axios.get(`http://localhost:5000/api/projects/${projectId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setUsers(response.data);
+        
+        // Fetch all users
+        const usersResponse = await axios.get("http://localhost:5000/api/users", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        
+        setUsers(usersResponse.data);
+        setProjectTeamMembers(projectResponse.data.teamMembers || []);
       } catch (err) {
-        setError("Error fetching users");
+        setError("Error fetching project details or users");
+        console.error("Error:", err);
       }
     };
 
-    if (isOpen) {
-      fetchUsers();
-    }
-  }, [isOpen]);
+    fetchProjectAndUsers();
+  }, [isOpen, projectId]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -63,6 +74,15 @@ function CreateTaskModal({ isOpen, onClose, onSubmit, projectId }) {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Get available users for assignment (team members + project creator)
+  const getAvailableUsers = () => {
+    const teamMemberIds = projectTeamMembers.map(member => member._id);
+    return users.filter(user => 
+      teamMemberIds.includes(user._id) || 
+      user.role === 'project-manager'
+    );
   };
 
   return (
@@ -152,18 +172,21 @@ function CreateTaskModal({ isOpen, onClose, onSubmit, projectId }) {
               <select
                 id="assignedTo"
                 name="assignedTo"
-                value={formData.assignedTo}
+                value={formData.assignedTo[0] || ""}
                 onChange={handleChange}
                 required
                 className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
               >
                 <option value="">Select a team member</option>
-                {users.map((user) => (
+                {getAvailableUsers().map((user) => (
                   <option key={user._id} value={user._id}>
                     {user.name} ({user.role})
                   </option>
                 ))}
               </select>
+              <p className="mt-1 text-xs text-gray-400">
+                Only project team members and managers can be assigned tasks
+              </p>
             </div>
 
             <div>

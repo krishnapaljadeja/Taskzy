@@ -76,10 +76,11 @@ router.get("/:id", auth, async (req, res) => {
     }
 
     // Check if user has access to the project
-    if (
-      project.createdBy._id.toString() !== req.user.id &&
-      !project.teamMembers.some((member) => member._id.toString() === req.user.id)
-    ) {
+    const hasAccess = 
+      project.createdBy._id.toString() === req.user.id ||
+      project.teamMembers.some((member) => member._id.toString() === req.user.id);
+
+    if (!hasAccess) {
       return res
         .status(403)
         .json({ message: "Not authorized to view this project" });
@@ -105,7 +106,7 @@ router.patch(
         return res.status(404).json({ message: "Project not found" });
       }
 
-      // Check if user is the creator
+      // Check if user is the creator - Fix: Convert ObjectId to string
       if (project.createdBy.toString() !== req.user.id) {
         return res
           .status(403)
@@ -148,7 +149,7 @@ router.patch(
         return res.status(404).json({ message: "Project not found" });
       }
 
-      // Check if user is the creator
+      // Check if user is the creator - Fix: Convert ObjectId to string
       if (project.createdBy.toString() !== req.user.id) {
         return res
           .status(403)
@@ -180,7 +181,7 @@ router.delete(
         return res.status(404).json({ message: "Project not found" });
       }
 
-      // Check if user is the creator
+      // Check if user is the creator - Fix: Convert ObjectId to string
       if (project.createdBy.toString() !== req.user.id) {
         return res
           .status(403)

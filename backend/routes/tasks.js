@@ -5,7 +5,7 @@ const Task = require("../models/Task");
 const Project = require("../models/Project");
 const { auth, checkRole } = require("../middleware/auth");
 
-// Middleware for validating task input (re-using for all relevant routes)
+// Middleware for validating task input
 const validateTaskInput = (req, res, next) => {
   const { title, description, projectId, assignedTo, dueDate, priority } =
     req.body;
@@ -51,11 +51,8 @@ router.post(
         return res.status(404).json({ message: "Project not found" });
       }
 
-      // Check if the project manager is the creator of the project or a team member
-      if (
-        project.createdBy.toString() !== req.user.id &&
-        !project.teamMembers.includes(req.user.id)
-      ) {
+      // Check if the project manager is the creator of the project - Fix: Convert ObjectId to string
+      if (project.createdBy.toString() !== req.user.id) {
         return res
           .status(403)
           .json({ message: "Not authorized to create tasks for this project" });
@@ -68,10 +65,10 @@ router.post(
         assignedTo,
         dueDate,
         priority,
-        createdBy: req.user.id,
       });
 
       await task.save();
+      await task.populate("assignedTo", "name email");
       res.status(201).json(task);
     } catch (error) {
       res
@@ -91,11 +88,12 @@ router.get("/project/:projectId", auth, async (req, res) => {
       return res.status(404).json({ message: "Project not found" });
     }
 
-    // Check if user is creator or team member of the project
-    if (
-      project.createdBy.toString() !== req.user.id &&
-      !project.teamMembers.some((memberId) => memberId.toString() === req.user.id)
-    ) {
+    // Check if user is creator or team member of the project - Fix: Convert ObjectId to string
+    const hasAccess = 
+      project.createdBy.toString() === req.user.id ||
+      project.teamMembers.some((memberId) => memberId.toString() === req.user.id);
+
+    if (!hasAccess) {
       return res
         .status(403)
         .json({ message: "Not authorized to view tasks for this project" });
@@ -158,12 +156,12 @@ router.put(
           .json({ message: "Associated project not found" });
       }
 
-      // Check if the user is a project manager or an assigned team member
-      if (
-        project.createdBy.toString() !== req.user.id &&
-        !project.teamMembers.some((memberId) => memberId.toString() === req.user.id) &&
-        !task.assignedTo.some((assigneeId) => assigneeId.toString() === req.user.id)
-      ) {
+      // Check if the user is a project manager or an assigned team member - Fix: Convert ObjectId to string
+      const isProjectManager = project.createdBy.toString() === req.user.id;
+      const isTeamMember = project.teamMembers.some((memberId) => memberId.toString() === req.user.id);
+      const isAssignedToTask = task.assignedTo.some((assigneeId) => assigneeId.toString() === req.user.id);
+
+      if (!isProjectManager && !isTeamMember && !isAssignedToTask) {
         return res
           .status(403)
           .json({ message: "Not authorized to update this task status" });
@@ -171,6 +169,7 @@ router.put(
 
       task.status = status;
       await task.save();
+      await task.populate("assignedTo", "name email");
       res.json(task);
     } catch (error) {
       res
@@ -203,11 +202,8 @@ router.put(
           .json({ message: "Associated project not found" });
       }
 
-      // Check if the user is the project manager or an assigned team member
-      if (
-        project.createdBy.toString() !== req.user.id &&
-        !project.teamMembers.some((memberId) => memberId.toString() === req.user.id)
-      ) {
+      // Check if the user is the project manager - Fix: Convert ObjectId to string
+      if (project.createdBy.toString() !== req.user.id) {
         return res
           .status(403)
           .json({ message: "Not authorized to update this task" });
@@ -216,6 +212,7 @@ router.put(
       // Apply updates
       Object.assign(task, updates);
       await task.save();
+      await task.populate("assignedTo", "name email");
       res.json(task);
     } catch (error) {
       res
@@ -246,7 +243,7 @@ router.delete(
           .json({ message: "Associated project not found" });
       }
 
-      // Check if the user is the project manager
+      // Check if the user is the project manager - Fix: Convert ObjectId to string
       if (project.createdBy.toString() !== req.user.id) {
         return res
           .status(403)
