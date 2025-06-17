@@ -11,13 +11,8 @@ function Dashboard() {
   const [selectedProject, setSelectedProject] = useState(null);
   const [activeTab, setActiveTab] = useState("projects");
 
-  console.log("Dashboard Component Render - user:", user, "loading:", loading);
-
   useEffect(() => {
     if (!loading && !user) {
-      console.error(
-        "Dashboard: user is null after loading. Redirecting to login. This should be handled by ProtectedRoute."
-      );
       navigate("/login");
     }
   }, [loading, user, navigate]);
@@ -40,9 +35,6 @@ function Dashboard() {
 
   const renderRoleBasedContent = () => {
     if (!user || !user.role) {
-      console.warn(
-        "renderRoleBasedContent: user or role is missing, falling back to default content."
-      );
       return (
         <div className="text-center py-8">
           <p className="text-gray-300">
@@ -177,14 +169,14 @@ function Dashboard() {
             </div>
             <div className="flex items-center space-x-4">
               {user?.name && user?.role && (
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-4">
                   <div className="text-right">
                     <p className="text-sm font-medium text-white">{user.name}</p>
-                    <p className={`text-xs px-2 py-1 rounded-full ${getRoleColor(user.role)}`}>
+                    <span className={`inline-block text-xs px-3 py-1 rounded-full font-medium ${getRoleColor(user.role)}`}>
                       {formatRole(user.role)}
-                    </p>
+                    </span>
                   </div>
-                  <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                  <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
                     <span className="text-white font-medium text-sm">
                       {user.name.charAt(0).toUpperCase()}
                     </span>

@@ -47,22 +47,12 @@ export const formatStatus = (status) => {
 // Get auth header
 export const getAuthHeader = () => {
   const token = localStorage.getItem("token");
-  console.log(
-    "getAuthHeader: Retrieved token from localStorage:",
-    token ? "Token found" : "No token"
-  );
-  console.log(
-    "getAuthHeader: Full token value (first 10 chars):",
-    token ? token.substring(0, 10) + "..." : "N/A"
-  );
   if (!token) {
-    console.log("getAuthHeader: No token found, returning empty headers");
     return {};
   }
   const headers = {
     Authorization: `Bearer ${token}`,
     "Content-Type": "application/json",
   };
-  console.log("getAuthHeader: Returning headers:", JSON.stringify(headers));
   return headers;
 };

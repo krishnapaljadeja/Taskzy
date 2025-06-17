@@ -16,7 +16,6 @@ function Login() {
     setLoading(true);
 
     try {
-      console.log("Attempting login with:", { email, password });
       const result = await login(email, password);
 
       if (result.success) {
@@ -25,7 +24,6 @@ function Login() {
         setError(result.error || "Login failed");
       }
     } catch (err) {
-      console.error("Login error:", err);
       setError("Failed to login. Please try again.");
     } finally {
       setLoading(false);

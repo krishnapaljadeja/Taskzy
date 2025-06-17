@@ -8,22 +8,15 @@ import Dashboard from "./pages/Dashboard";
 // Protected Route component
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
-  console.log("ProtectedRoute render:", {
-    user: user?.email,
-    loading,
-  });
 
   if (loading) {
-    console.log("ProtectedRoute: Still loading...");
     return <div>Loading...</div>;
   }
 
   if (!user) {
-    console.log("ProtectedRoute: Not authenticated, redirecting to login");
     return <Navigate to="/login" replace />;
   }
 
-  console.log("ProtectedRoute: User authenticated, rendering children");
   return children;
 };
 

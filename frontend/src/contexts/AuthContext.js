@@ -20,49 +20,32 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const checkAuth = async () => {
-    console.log("AuthContext checkAuth: Initiating check.");
     const token = localStorage.getItem("token");
     if (token) {
-      console.log("AuthContext checkAuth: Token found in localStorage.");
       try {
         const response = await axios.get("http://localhost:5000/api/auth/me", {
           headers: { Authorization: `Bearer ${token}` },
         });
         setUser(response.data.user);
-        console.log(
-          "AuthContext checkAuth: User data fetched successfully:",
-          response.data.user
-        );
       } catch (error) {
-        console.error("AuthContext checkAuth: Auth check failed:", error);
         localStorage.removeItem("token");
         setUser(null);
-        console.log("AuthContext checkAuth: User set to null due to error.");
       }
-    } else {
-      console.log("AuthContext checkAuth: No token found in localStorage.");
     }
     setLoading(false);
-    console.log("AuthContext checkAuth: Loading set to false.");
   };
 
   const login = async (email, password) => {
     try {
-      console.log("AuthContext login: Logging in");
       const response = await axios.post(
         "http://localhost:5000/api/auth/login",
         { email, password }
       );
       const { token, user } = response.data;
       localStorage.setItem("token", token);
-      console.log(
-        "AuthContext login: Token saved and retrieved from localStorage: Success"
-      );
       setUser(user);
-      console.log("AuthContext login: user set to Object");
       return { success: true };
     } catch (error) {
-      console.error("AuthContext login: Login failed:", error);
       return {
         success: false,
         error:
@@ -74,21 +57,15 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (userData) => {
     try {
-      console.log("AuthContext register: Registering user.");
       const response = await axios.post(
         "http://localhost:5000/api/auth/register",
         userData
       );
       const { token, user } = response.data;
       localStorage.setItem("token", token);
-      console.log(
-        "AuthContext register: Token saved and retrieved from localStorage: Success"
-      );
       setUser(user);
-      console.log("AuthContext register: user set to Object");
       return { success: true };
     } catch (error) {
-      console.error("AuthContext register: Registration failed:", error);
       return {
         success: false,
         error:
@@ -99,7 +76,6 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
-    console.log("AuthContext logout: Logging out user");
     localStorage.removeItem("token");
     setUser(null);
   };
@@ -110,9 +86,6 @@ export const AuthProvider = ({ children }) => {
       (response) => response,
       (error) => {
         if (error.response?.status === 401) {
-          console.log(
-            "AuthContext interceptor: 401 Unauthorized, logging out."
-          );
           localStorage.removeItem("token");
           setUser(null);
         }
@@ -132,11 +105,6 @@ export const AuthProvider = ({ children }) => {
     register,
     logout,
   };
-
-  console.log("AuthContext render: Current state", {
-    user: value.user?.email,
-    loading: value.loading,
-  });
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
