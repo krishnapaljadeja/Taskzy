@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import toast from "react-hot-toast";
 import { useAuth } from "../contexts/AuthContext";
 import { config } from "../config";
 import { getAuthHeader } from "../utils";
@@ -28,6 +29,7 @@ const Projects = ({ onSelectProject, selectedProject }) => {
     } catch (err) {
       console.error("Error fetching projects:", err);
       setError(err.response?.data?.message || "Failed to fetch projects.");
+      toast.error("Failed to fetch projects");
     } finally {
       setLoading(false);
     }
@@ -51,9 +53,11 @@ const Projects = ({ onSelectProject, selectedProject }) => {
       });
       setProjects((prevProjects) => [...prevProjects, response.data]);
       setIsModalOpen(false);
+      toast.success("Project created successfully!");
     } catch (err) {
       console.error("Error creating project:", err);
       setError(err.response?.data?.message || "Failed to create project.");
+      toast.error(err.response?.data?.message || "Failed to create project");
     }
   };
 
@@ -63,6 +67,11 @@ const Projects = ({ onSelectProject, selectedProject }) => {
       setError("Not authenticated.");
       return;
     }
+    
+    if (!window.confirm("Are you sure you want to delete this project? This action cannot be undone.")) {
+      return;
+    }
+
     try {
       await axios.delete(config.PROJECTS.DELETE(projectId), {
         headers: getAuthHeader(),
@@ -70,9 +79,11 @@ const Projects = ({ onSelectProject, selectedProject }) => {
       setProjects((prevProjects) =>
         prevProjects.filter((project) => project._id !== projectId)
       );
+      toast.success("Project deleted successfully!");
     } catch (err) {
       console.error("Error deleting project:", err);
       setError(err.response?.data?.message || "Failed to delete project.");
+      toast.error(err.response?.data?.message || "Failed to delete project");
     }
   };
 
@@ -93,9 +104,11 @@ const Projects = ({ onSelectProject, selectedProject }) => {
           project._id === projectId ? response.data : project
         )
       );
+      toast.success(`Project status updated to ${newStatus}`);
     } catch (err) {
       console.error("Error updating project status:", err);
       setError(err.response?.data?.message || "Failed to update project status.");
+      toast.error(err.response?.data?.message || "Failed to update project status");
     }
   };
 

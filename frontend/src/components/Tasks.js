@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
+import toast from "react-hot-toast";
 import { useAuth } from "../contexts/AuthContext";
 import CreateTaskModal from "./CreateTaskModal";
 import { config } from "../config";
@@ -44,6 +45,7 @@ const Tasks = ({ projectId, isMyTasksView = false }) => {
       setTasks(response.data);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to fetch tasks.");
+      toast.error("Failed to fetch tasks");
     } finally {
       setLoading(false);
     }
@@ -69,8 +71,10 @@ const Tasks = ({ projectId, isMyTasksView = false }) => {
       );
       setTasks((prevTasks) => [...prevTasks, response.data]);
       setIsModalOpen(false);
+      toast.success("Task created successfully!");
     } catch (err) {
       setError(err.response?.data?.message || "Failed to create task.");
+      toast.error(err.response?.data?.message || "Failed to create task");
     }
   };
 
@@ -82,15 +86,17 @@ const Tasks = ({ projectId, isMyTasksView = false }) => {
     }
     try {
       const response = await axios.put(
-        config.TASKS.UPDATE(taskId),
+        config.TASKS.UPDATE_STATUS(taskId),
         { status: newStatus },
         { headers: getAuthHeader() }
       );
       setTasks((prevTasks) =>
         prevTasks.map((task) => (task._id === taskId ? response.data : task))
       );
+      toast.success(`Task status updated to ${newStatus}`);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to update task status.");
+      toast.error(err.response?.data?.message || "Failed to update task status");
     }
   };
 
@@ -100,11 +106,18 @@ const Tasks = ({ projectId, isMyTasksView = false }) => {
       setError("Not authenticated.");
       return;
     }
+    
+    if (!window.confirm("Are you sure you want to delete this task? This action cannot be undone.")) {
+      return;
+    }
+
     try {
       await axios.delete(config.TASKS.DELETE(taskId), { headers: getAuthHeader() });
       setTasks((prevTasks) => prevTasks.filter((task) => task._id !== taskId));
+      toast.success("Task deleted successfully!");
     } catch (err) {
       setError(err.response?.data?.message || "Failed to delete task.");
+      toast.error(err.response?.data?.message || "Failed to delete task");
     }
   };
 
@@ -262,27 +275,25 @@ const Tasks = ({ projectId, isMyTasksView = false }) => {
                   </div>
                 )}
                 
-                {task.assignedTo && (
+                {task.assignedTo && task.assignedTo.length > 0 && (
                   <div className="flex items-center text-xs text-gray-400">
                     <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
-                    Assigned to: {task.assignedTo.name || "Unknown"}
+                    Assigned to: {task.assignedTo[0]?.name || "Unknown"}
                   </div>
                 )}
                 
                 <div className="flex items-center justify-between pt-3 border-t border-gray-600">
-                  {(user?.role === "project-manager" || user?.role === "team-member") && (
-                    <select
-                      value={task.status}
-                      onChange={(e) => handleUpdateStatus(task._id, e.target.value)}
-                      className="text-xs bg-gray-600 border border-gray-500 rounded px-2 py-1 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                      <option value="To Do">To Do</option>
-                      <option value="In Progress">In Progress</option>
-                      <option value="Done">Done</option>
-                    </select>
-                  )}
+                  <select
+                    value={task.status}
+                    onChange={(e) => handleUpdateStatus(task._id, e.target.value)}
+                    className="text-xs bg-gray-600 border border-gray-500 rounded px-2 py-1 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="To Do">To Do</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Done">Done</option>
+                  </select>
                   
                   {user?.role === "project-manager" && (
                     <button

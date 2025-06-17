@@ -51,7 +51,7 @@ router.post(
         return res.status(404).json({ message: "Project not found" });
       }
 
-      // Check if the project manager is the creator of the project - Fix: Convert ObjectId to string
+      // Check if the project manager is the creator of the project
       if (project.createdBy.toString() !== req.user.id) {
         return res
           .status(403)
@@ -88,7 +88,7 @@ router.get("/project/:projectId", auth, async (req, res) => {
       return res.status(404).json({ message: "Project not found" });
     }
 
-    // Check if user is creator or team member of the project - Fix: Convert ObjectId to string
+    // Check if user is creator or team member of the project
     const hasAccess = 
       project.createdBy.toString() === req.user.id ||
       project.teamMembers.some((memberId) => memberId.toString() === req.user.id);
@@ -131,7 +131,6 @@ router.get("/my", auth, async (req, res) => {
 router.put(
   "/:taskId/status",
   auth,
-  checkRole(["project-manager", "team-member"]),
   async (req, res) => {
     try {
       const { taskId } = req.params;
@@ -156,7 +155,7 @@ router.put(
           .json({ message: "Associated project not found" });
       }
 
-      // Check if the user is a project manager or an assigned team member - Fix: Convert ObjectId to string
+      // Check if the user is a project manager, team member, or assigned to the task
       const isProjectManager = project.createdBy.toString() === req.user.id;
       const isTeamMember = project.teamMembers.some((memberId) => memberId.toString() === req.user.id);
       const isAssignedToTask = task.assignedTo.some((assigneeId) => assigneeId.toString() === req.user.id);
@@ -202,7 +201,7 @@ router.put(
           .json({ message: "Associated project not found" });
       }
 
-      // Check if the user is the project manager - Fix: Convert ObjectId to string
+      // Check if the user is the project manager
       if (project.createdBy.toString() !== req.user.id) {
         return res
           .status(403)
@@ -243,7 +242,7 @@ router.delete(
           .json({ message: "Associated project not found" });
       }
 
-      // Check if the user is the project manager - Fix: Convert ObjectId to string
+      // Check if the user is the project manager
       if (project.createdBy.toString() !== req.user.id) {
         return res
           .status(403)

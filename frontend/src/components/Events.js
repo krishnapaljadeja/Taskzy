@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import toast from "react-hot-toast";
 import { useAuth } from "../contexts/AuthContext";
 import CreateEventModal from "./CreateEventModal";
 import { config } from "../config";
@@ -22,6 +23,7 @@ function Events() {
           setError("");
         } catch (err) {
           setError("Error fetching events");
+          toast.error("Failed to fetch events");
           console.error("Error fetching events:", err);
         }
       };
@@ -41,13 +43,19 @@ function Events() {
         setEvents(response.data);
       }
       setIsCreateModalOpen(false);
+      toast.success("Event created successfully!");
     } catch (err) {
       setError("Error creating event");
+      toast.error(err.response?.data?.message || "Failed to create event");
       console.error("Error creating event:", err);
     }
   };
 
   const handleDeleteEvent = async (eventId) => {
+    if (!window.confirm("Are you sure you want to delete this event? This action cannot be undone.")) {
+      return;
+    }
+
     try {
       await axios.delete(config.EVENTS.DELETE(eventId), {
         headers: getAuthHeader(),
@@ -58,8 +66,10 @@ function Events() {
         });
         setEvents(response.data);
       }
+      toast.success("Event deleted successfully!");
     } catch (err) {
       setError("Error deleting event");
+      toast.error(err.response?.data?.message || "Failed to delete event");
       console.error("Error deleting event:", err);
     }
   };
@@ -77,8 +87,10 @@ function Events() {
         });
         setEvents(response.data);
       }
+      toast.success(`RSVP updated to ${status}`);
     } catch (err) {
       setError("Error updating RSVP status");
+      toast.error(err.response?.data?.message || "Failed to update RSVP");
       console.error("Error updating RSVP status:", err);
     }
   };
