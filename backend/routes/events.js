@@ -112,7 +112,7 @@ router.delete(
           .status(403)
           .json({ message: "Not authorized to delete this event" });
       }
-      await event.remove();
+      await Event.findByIdAndDelete(event._id);
       res.json({ message: "Event deleted successfully" });
     } catch (error) {
       res

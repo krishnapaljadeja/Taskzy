@@ -12,19 +12,8 @@ const Projects = ({ onSelectProject, selectedProject }) => {
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  console.log(
-    "Projects Component Render - user:",
-    user,
-    "authLoading:",
-    authLoading
-  );
-
   const fetchProjects = async () => {
     if (authLoading || !user) {
-      console.log(
-        "Projects fetchProjects: Skipping fetch due to authLoading or no user",
-        { authLoading, user: user?.email }
-      );
       setLoading(false);
       if (!user) setError("User not authenticated.");
       return;
@@ -34,15 +23,7 @@ const Projects = ({ onSelectProject, selectedProject }) => {
     setError(null);
     try {
       const headers = getAuthHeader();
-      console.log(
-        "Projects fetchProjects: Sending request with headers:",
-        JSON.stringify(headers)
-      );
       const response = await axios.get(config.PROJECTS.LIST, { headers });
-      console.log(
-        "Projects fetchProjects: Successfully fetched projects",
-        response.data
-      );
       setProjects(response.data);
     } catch (err) {
       console.error("Error fetching projects:", err);
@@ -95,13 +76,81 @@ const Projects = ({ onSelectProject, selectedProject }) => {
     }
   };
 
+  const handleUpdateStatus = async (projectId, newStatus) => {
+    setError(null);
+    if (!user) {
+      setError("Not authenticated.");
+      return;
+    }
+    try {
+      const response = await axios.patch(
+        config.PROJECTS.UPDATE_STATUS(projectId),
+        { status: newStatus },
+        { headers: getAuthHeader() }
+      );
+      setProjects((prevProjects) =>
+        prevProjects.map((project) =>
+          project._id === projectId ? response.data : project
+        )
+      );
+    } catch (err) {
+      console.error("Error updating project status:", err);
+      setError(err.response?.data?.message || "Failed to update project status.");
+    }
+  };
+
   const handleSelectProject = (project) => {
     if (onSelectProject) {
       onSelectProject(project);
     }
   };
 
-  // Show loading state if authentication is still pending or local project fetching is in progress
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "Planning":
+        return "bg-yellow-600 text-yellow-100 border border-yellow-500";
+      case "Active":
+        return "bg-green-600 text-green-100 border border-green-500";
+      case "On Hold":
+        return "bg-orange-600 text-orange-100 border border-orange-500";
+      case "Completed":
+        return "bg-blue-600 text-blue-100 border border-blue-500";
+      default:
+        return "bg-gray-600 text-gray-100 border border-gray-500";
+    }
+  };
+
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case "Planning":
+        return (
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+          </svg>
+        );
+      case "Active":
+        return (
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+        );
+      case "On Hold":
+        return (
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        );
+      case "Completed":
+        return (
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+        );
+      default:
+        return null;
+    }
+  };
+
   if (authLoading || loading) {
     return (
       <div className="text-center py-8">
@@ -111,7 +160,6 @@ const Projects = ({ onSelectProject, selectedProject }) => {
     );
   }
 
-  // If not loading but no user, this might be a fallback or an issue with ProtectedRoute
   if (!user) {
     return (
       <div className="text-center py-8">
@@ -182,11 +230,13 @@ const Projects = ({ onSelectProject, selectedProject }) => {
                 <h3 className="text-lg font-semibold text-white mb-2 line-clamp-2">
                   {project.name}
                 </h3>
-                {project.createdBy && project.createdBy._id === user.id && (
-                  <span className="bg-purple-600 text-purple-100 text-xs px-2 py-1 rounded-full">
-                    Owner
-                  </span>
-                )}
+                <div className="flex items-center space-x-2">
+                  {project.createdBy && project.createdBy._id === user.id && (
+                    <span className="bg-purple-600 text-purple-100 text-xs px-2 py-1 rounded-full">
+                      Owner
+                    </span>
+                  )}
+                </div>
               </div>
               
               <p className="text-gray-300 text-sm mb-4 line-clamp-3">
@@ -194,6 +244,28 @@ const Projects = ({ onSelectProject, selectedProject }) => {
               </p>
               
               <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(project.status)}`}>
+                    {getStatusIcon(project.status)}
+                    <span className="ml-1">{project.status}</span>
+                  </span>
+                  {user?.role === "project-manager" && project.createdBy && project.createdBy._id === user.id && (
+                    <select
+                      value={project.status}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        handleUpdateStatus(project._id, e.target.value);
+                      }}
+                      className="text-xs bg-gray-600 border border-gray-500 rounded px-2 py-1 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="Planning">Planning</option>
+                      <option value="Active">Active</option>
+                      <option value="On Hold">On Hold</option>
+                      <option value="Completed">Completed</option>
+                    </select>
+                  )}
+                </div>
+
                 {project.teamMembers && project.teamMembers.length > 0 && (
                   <div>
                     <p className="text-xs text-gray-400 mb-2">Team Members</p>

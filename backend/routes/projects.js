@@ -25,15 +25,18 @@ router.post(
         return res.status(400).json({ errors: errors.array() });
       }
 
-      const { name, description, teamMembers } = req.body;
+      const { name, description, teamMembers, status } = req.body;
       const project = new Project({
         name,
         description,
         createdBy: req.user.id,
         teamMembers,
+        status: status || "Planning",
       });
 
       await project.save();
+      await project.populate("createdBy", "name email");
+      await project.populate("teamMembers", "name email");
       res.status(201).json(project);
     } catch (error) {
       res
@@ -95,12 +98,49 @@ router.patch(
   "/:id",
   auth,
   checkRole(["project-manager"]),
-  validateProject,
   async (req, res) => {
     try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
+      const project = await Project.findById(req.params.id);
+      if (!project) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+
+      // Check if user is the creator
+      if (project.createdBy.toString() !== req.user.id) {
+        return res
+          .status(403)
+          .json({ message: "Not authorized to update this project" });
+      }
+
+      const { name, description, teamMembers, status } = req.body;
+      if (name) project.name = name;
+      if (description) project.description = description;
+      if (teamMembers) project.teamMembers = teamMembers;
+      if (status) project.status = status;
+
+      await project.save();
+      await project.populate("createdBy", "name email");
+      await project.populate("teamMembers", "name email");
+      res.json(project);
+    } catch (error) {
+      res
+        .status(500)
+        .json({ message: "Error updating project", error: error.message });
+    }
+  }
+);
+
+// Update project status (Project Manager only)
+router.patch(
+  "/:id/status",
+  auth,
+  checkRole(["project-manager"]),
+  async (req, res) => {
+    try {
+      const { status } = req.body;
+      
+      if (!["Planning", "Active", "On Hold", "Completed"].includes(status)) {
+        return res.status(400).json({ message: "Invalid status" });
       }
 
       const project = await Project.findById(req.params.id);
@@ -115,17 +155,15 @@ router.patch(
           .json({ message: "Not authorized to update this project" });
       }
 
-      const { name, description, teamMembers } = req.body;
-      project.name = name;
-      project.description = description;
-      project.teamMembers = teamMembers;
-
+      project.status = status;
       await project.save();
+      await project.populate("createdBy", "name email");
+      await project.populate("teamMembers", "name email");
       res.json(project);
     } catch (error) {
       res
         .status(500)
-        .json({ message: "Error updating project", error: error.message });
+        .json({ message: "Error updating project status", error: error.message });
     }
   }
 );

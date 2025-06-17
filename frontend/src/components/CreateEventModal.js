@@ -45,22 +45,36 @@ function CreateEventModal({ isOpen, onClose, onSubmit }) {
     <Dialog
       open={isOpen}
       onClose={onClose}
-      className="fixed inset-0 z-10 overflow-y-auto"
+      className="fixed inset-0 z-50 overflow-y-auto"
     >
-      <div className="flex items-center justify-center min-h-screen">
-        <Dialog.Overlay className="fixed inset-0 bg-black opacity-30" />
+      <div className="flex items-center justify-center min-h-screen px-4">
+        <Dialog.Overlay className="fixed inset-0 bg-black bg-opacity-75 transition-opacity" />
 
-        <div className="relative bg-white rounded-lg max-w-md w-full mx-4 p-6">
-          <Dialog.Title className="text-lg font-medium text-gray-900 mb-4">
-            Create New Event
-          </Dialog.Title>
+        <div className="relative bg-gray-800 rounded-xl max-w-md w-full mx-4 p-6 shadow-2xl border border-gray-700">
+          <div className="flex items-center justify-between mb-6">
+            <Dialog.Title className="text-xl font-semibold text-white flex items-center">
+              <svg className="w-5 h-5 mr-2 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Create New Event
+            </Dialog.Title>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-white transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
 
           {error && (
-            <div className="mb-4 bg-red-50 border-l-4 border-red-400 p-4">
-              <div className="flex">
-                <div className="ml-3">
-                  <p className="text-sm text-red-700">{error}</p>
-                </div>
+            <div className="mb-4 bg-red-900 border border-red-700 rounded-lg p-4">
+              <div className="flex items-center">
+                <svg className="w-5 h-5 text-red-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="text-red-300 text-sm">{error}</span>
               </div>
             </div>
           )}
@@ -69,9 +83,9 @@ function CreateEventModal({ isOpen, onClose, onSubmit }) {
             <div>
               <label
                 htmlFor="title"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-gray-300 mb-2"
               >
-                Title
+                Event Title
               </label>
               <input
                 type="text"
@@ -79,14 +93,15 @@ function CreateEventModal({ isOpen, onClose, onSubmit }) {
                 name="title"
                 value={formData.title}
                 onChange={handleChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors"
+                placeholder="Enter event title"
               />
             </div>
 
             <div>
               <label
                 htmlFor="description"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-gray-300 mb-2"
               >
                 Description
               </label>
@@ -96,14 +111,15 @@ function CreateEventModal({ isOpen, onClose, onSubmit }) {
                 value={formData.description}
                 onChange={handleChange}
                 rows={3}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors resize-none"
+                placeholder="Describe your event"
               />
             </div>
 
             <div>
               <label
                 htmlFor="location"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-gray-300 mb-2"
               >
                 Location
               </label>
@@ -113,14 +129,15 @@ function CreateEventModal({ isOpen, onClose, onSubmit }) {
                 name="location"
                 value={formData.location}
                 onChange={handleChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors"
+                placeholder="Enter event location"
               />
             </div>
 
             <div>
               <label
                 htmlFor="eventDate"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-gray-300 mb-2"
               >
                 Date and Time
               </label>
@@ -130,7 +147,7 @@ function CreateEventModal({ isOpen, onClose, onSubmit }) {
                 name="eventDate"
                 value={formData.eventDate}
                 onChange={handleChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors"
               />
             </div>
 
@@ -141,27 +158,27 @@ function CreateEventModal({ isOpen, onClose, onSubmit }) {
                 name="isPublic"
                 checked={formData.isPublic}
                 onChange={handleChange}
-                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-600 bg-gray-700 rounded"
               />
               <label
                 htmlFor="isPublic"
-                className="ml-2 block text-sm text-gray-900"
+                className="ml-2 block text-sm text-gray-300"
               >
                 Make this event public
               </label>
             </div>
 
-            <div className="mt-6 flex justify-end space-x-3">
+            <div className="flex justify-end space-x-3 pt-4">
               <button
                 type="button"
                 onClick={onClose}
-                className="inline-flex justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                className="px-4 py-2 text-sm font-medium text-gray-300 bg-gray-700 border border-gray-600 rounded-lg hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg hover:from-purple-700 hover:to-pink-700 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-200"
               >
                 Create Event
               </button>
